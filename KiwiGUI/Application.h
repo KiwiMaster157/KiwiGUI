@@ -5,7 +5,16 @@ namespace kiwi
 namespace gui
 {
 
+class Application
+{
+public:
 
+
+
+private:
+
+
+};
 
 }
 }
