@@ -6,6 +6,11 @@ namespace kiwi
 namespace gui
 {
 
+Gui::Gui()
+{
+	m_lookupTable[ROOT].type = GuiElement::Type::Empty;
+}
+
 #pragma region
 
 void Gui::openTexture(Key name, const std::string& file)
@@ -98,31 +103,173 @@ sf::Transformable& Gui::textTransform(Key name)
 
 #pragma endregion Transforms
 
+#pragma region
+
+GuiElement& Gui::insertElement(Key name, Key parent, GuiElement::Type type)
+{
+	if (m_lookupTable.count(name))
+		throw std::invalid_argument(std::string("\"") + std::string(name) + "\" already in use.");
+	
+	directElementAccess(parent).children.push_back(name);
+
+	m_lookupTable[name].type = type;
+	m_lookupTable[name].parent = parent;
+
+	return m_lookupTable[name];
+}
+
+void Gui::removeElement(Key name)
+{
+	GuiElement& element = directElementAccess(name);
+	GuiElement& parent = directElementAccess(element.parent);
+
+	//Remove from parent's records
+	for (auto itt = parent.children.begin(); itt != parent.children.end(); itt++)
+	{
+		if (*itt == name)
+			parent.children.erase(itt);
+	}
+
+	for (Key k : element.children)
+		removeElement(k);
+
+	m_lookupTable.erase(name);
+}
+
+void Gui::transferOwnership(Key name, Key toOwner)
+{
+	Key temp = toOwner;
+
+	//Check for circular dependency
+	while (temp != ROOT)
+	{
+		directElementAccess(name);
+		if (temp == name)
+			throw std::logic_error("Transfer of ownership would result in circular ownership.");
+		temp = directElementAccess(temp).parent;
+	}
+
+	GuiElement& element = directElementAccess(name);
+	GuiElement& parent = directElementAccess(element.parent);
+
+	//Remove from parent's records
+	for (auto itt = parent.children.begin(); itt != parent.children.end(); itt++)
+	{
+		if (*itt == name)
+			parent.children.erase(itt);
+	}
+
+	//Add to new owner
+	directElementAccess(toOwner).children.push_back(name);
+}
+
+void Gui::moveForward(Key name, int amount)
+{
+	GuiElement& element = directElementAccess(name);
+	GuiElement& parent = directElementAccess(element.parent);
+
+	int index = 0;
+
+	for (std::size_t i = 0; i < parent.children.size(); i++)
+	{
+		if (parent.children[i + amount] == name)
+		{
+			index = i;
+			break;
+		}
+	}
+
+	for (int i = 0; i < amount; i++)
+	{
+		parent.children[i + index] = parent.children[i + index + 1];
+	}
+}
+
+void Gui::moveBackward(Key name, int amount)
+{
+	GuiElement& element = directElementAccess(name);
+	GuiElement& parent = directElementAccess(element.parent);
+
+	int index = 0;
+
+	for (std::size_t i = amount; i < parent.children.size(); i++)
+	{
+		if (parent.children[i - amount] == name)
+		{
+			index = i;
+			break;
+		}
+	}
+
+	for (int i = amount - 1; i >= 0; i--)
+	{
+		parent.children[i + index] = parent.children[i + index - 1];
+	}
+}
+
+void Gui::moveToFront(Key name)
+{
+	GuiElement& element = directElementAccess(name);
+	GuiElement& parent = directElementAccess(element.parent);
+	
+	bool found = false;
+
+	for (int i = parent.children.size() - 1; i > 0; i--)
+	{
+		if (found)
+		{
+			parent.children[i] = parent.children[i - 1];
+		}
+		else if (parent.children[i - 1] == name)
+		{
+			found = true;
+		}
+	}
+
+	parent.children.front() = name;
+}
+
+void Gui::moveToBack(Key name)
+{
+	GuiElement& element = directElementAccess(name);
+	GuiElement& parent = directElementAccess(element.parent);
+
+	bool found = false;
+
+	for (std::size_t i = 0; i < parent.children.size(); i++)
+	{
+		if (found)
+		{
+			parent.children[i - 1] = parent.children[i];
+		}
+		else if (parent.children[i] == name)
+		{
+			found = true;
+		}
+	}
+
+	parent.children.back() = name;
+}
+
 void Gui::mouseMove(int x, int y)
 {
-	mouseMoveHelper(m_root, sf::Vector2f(
+	mouseMoveHelper(ROOT, sf::Vector2f(
 		static_cast<float>(x), static_cast<float>(y)));
 }
 
 void Gui::mouseButtonDown(sf::Mouse::Button btn)
 {
-	mouseButtonDownHelper(m_root, btn);
+	mouseButtonDownHelper(ROOT, btn);
 }
 
 void Gui::mouseButtonUp(sf::Mouse::Button btn)
 {
-	mouseButtonUpHelper(m_root, btn);
+	mouseButtonUpHelper(ROOT, btn);
 }
 
 void Gui::draw(sf::RenderTarget& target)
 {
-	draw(target, m_root);
-}
-
-void Gui::draw(sf::RenderTarget& target, Key root)
-{
-	drawHelper(target, root, sf::Vector2f(0, 0));
-	m_root = root;
+	drawHelper(target, ROOT, sf::Vector2f(0, 0));
 }
 
 GuiElement& Gui::directElementAccess(const Key& name)
@@ -132,6 +279,8 @@ GuiElement& Gui::directElementAccess(const Key& name)
 		throw std::range_error(std::string("\"") + std::string(name) + "\" does not name a Texture.");
 	return itt->second;
 }
+
+#pragma endregion Element Access
 
 void Gui::drawHelper(sf::RenderTarget& target, Key name, sf::Vector2f offset)
 {
@@ -159,9 +308,10 @@ bool Gui::mouseMoveHelper(Key name, sf::Vector2f point)
 			return true;
 	}
 
-	Flags output = element.mouseMove(point - element.offset);
+	Flags output = element.mouseMove(point);
 	if (output & EVENT_CALLBACK)
-		element.cb(name, element.getState());
+		if(element.cb)
+			element.cb(name, element.getState());
 	return output & EVENT_CONSUMED;
 }
 
@@ -179,7 +329,8 @@ bool Gui::mouseButtonDownHelper(Key name, sf::Mouse::Button btn)
 
 	Flags output = element.mouseButtonDown(btn);
 	if (output& EVENT_CALLBACK)
-		element.cb(name, element.getState);
+		if(element.cb)
+			element.cb(name, element.getState());
 	return output & EVENT_CONSUMED;
 }
 
@@ -196,8 +347,8 @@ bool Gui::mouseButtonUpHelper(Key name, sf::Mouse::Button btn)
 	}
 
 	Flags output = element.mouseButtonUp(btn);
-	if (output& EVENT_CALLBACK)
-		element.cb(name, element.getState);
+	if (output & EVENT_CALLBACK)
+		element.cb(name, element.getState());
 	return output & EVENT_CONSUMED;
 }
 

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Classes.h"
+#include "GuiElement.h"
 #include "Key.h"
 
 #include <SFML/Graphics/Font.hpp>
@@ -17,10 +18,12 @@ namespace kiwi
 namespace gui
 {
 
+const Key ROOT = "ROOT";
+
 class Gui
 {
 public:
-	friend struct GuiElement;
+	Gui();
 
 #pragma region
 
@@ -55,30 +58,30 @@ public:
 
 #pragma region
 
-	/*
+	
 	//Throws std::invalid_argument if name already in use
-	void insertElement(Key name, GuiElement::Type type);
+	//Throws std::range_error if parent could not be found
+	GuiElement& insertElement(Key name, Key parent, GuiElement::Type type);
 
 	//Removes element and children recursively
 	void removeElement(Key name);
 
 	//
-	void transferOwnership(Key transfer, Key fromOwner, Key toOwner);
+	void transferOwnership(Key name, Key toOwner);
 
-	void moveForward(Key name, Key parent, int amount = 1);
-	void moveBack(Key name, Key parent, int amount);
+	//Negative amounts result in undefined behavior
+	//Moving an item out of array bounds = UB
+	void moveForward(Key name, int amount = 1);
+	void moveBackward(Key name, int amount = 1);
 
-	void moveToFront(Key name, Key parent);
-	void moveToBack(Key name, Key parent);
-
-	*/
+	void moveToFront(Key name);
+	void moveToBack(Key name);
 
 	void mouseMove(int x, int y);
 	void mouseButtonDown(sf::Mouse::Button btn);
 	void mouseButtonUp(sf::Mouse::Button btn);
 
 	void draw(sf::RenderTarget& target);
-	void draw(sf::RenderTarget& target, Key root);
 
 	//Throw std::range_error on failure
 	GuiElement& directElementAccess(const Key& name);
@@ -87,7 +90,6 @@ public:
 
 private:
 	std::unordered_map<Key, GuiElement> m_lookupTable;
-	Key m_root;
 
 	std::map<Key, sf::Texture> m_textures;
 	std::map<Key, sf::Font> m_fonts;

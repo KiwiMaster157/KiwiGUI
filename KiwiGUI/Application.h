@@ -19,7 +19,7 @@ public:
 
 	bool pollAllEvents(sf::Window& win, Gui& gui);
 
-	bool pollEvent(sf::Window& win, Gui& gui);
+	void processEvent(sf::Event e, sf::Window& win, Gui& gui);
 
 	std::array<Callback, sf::Keyboard::KeyCount> keyCallbacks;
 	Callback closeCallback;

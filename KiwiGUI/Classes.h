@@ -21,8 +21,7 @@ using Duration = Clock::duration;
 class Key;
 
 //Responsible for polling for raw events and calling listeners.
-//Also contains GUI.
-class Application;
+struct Application;
 
 //Interface for interacting with GUIElements.
 class Gui;

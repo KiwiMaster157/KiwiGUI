@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Classes.h"
+#include "Key.h"
 
 #include <SFML/Graphics/RenderTarget.hpp>
 #include <SFML/Graphics/Text.hpp>
@@ -14,6 +15,28 @@ namespace kiwi
 {
 namespace gui
 {
+
+
+//===== Button State Flags =====
+
+//Masks for flags related to how the mouse has interacted with a button
+const Flags BUTTON_HOVER_MASK = 1;
+const Flags BUTTON_LMB_MASK = 2;
+const Flags BUTTON_MMB_MASK = 4;
+const Flags BUTTON_RMB_MASK = 8;
+const Flags BUTTON_SELECT_MASK = 16;
+
+const Flags BUTTON_LMB_SENSITIVE = 32;
+const Flags BUTTON_MMB_SENSITIVE = 64;
+const Flags BUTTON_RMB_SENSITIVE = 128;
+
+//When flag is false, element and children do nothing
+const Flags BUTTON_ACTIVE_MASK = 256;
+
+//===== Event Return Flags =====
+const Flags EVENT_NORMAL = 0;
+const Flags EVENT_CONSUMED = 1;
+const Flags EVENT_CALLBACK = 2;
 
 sf::Transform getOffsetTransform(sf::Vector2f offset);
 
@@ -62,6 +85,7 @@ struct GuiElement
 	//Beginning = Front of screen
 	//Ending = Back of screen
 	std::vector<Key> children;
+	Key parent;
 
 	enum class Type
 	{
@@ -76,7 +100,7 @@ struct GuiElement
 	sf::Text text;
 	sf::Sprite sprite;
 
-	sf::IntRect baseRect;
+	sf::IntRect baseRect = sf::IntRect(0, 0, 128, 128);
 
 	sf::Vector2f offset = sf::Vector2f(0, 0);
 #pragma endregion Basic UI
@@ -89,7 +113,7 @@ struct GuiElement
 #pragma endregion Animation
 
 #pragma region
-	Flags buttonFlags = 0;
+	Flags buttonFlags = BUTTON_ACTIVE_MASK;
 	Callback cb;
 	int buttonState = 0;
 #pragma endregion Button
@@ -99,27 +123,6 @@ struct GuiElement
 #pragma endregion Card
 #pragma endregion Fields
 };
-
-//===== Button State Flags =====
-
-//Masks for flags related to how the mouse has interacted with a button
-const Flags BUTTON_HOVER_MASK = 1;
-const Flags BUTTON_LMB_MASK = 2;
-const Flags BUTTON_MMB_MASK = 4;
-const Flags BUTTON_RMB_MASK = 8;
-const Flags BUTTON_SELECT_MASK = 16;
-
-const Flags BUTTON_LMB_SENSITIVE = 32;
-const Flags BUTTON_MMB_SENSITIVE = 64;
-const Flags BUTTON_RMB_SENSITIVE = 128;
-
-//When flag is false, element and children do nothing
-const Flags BUTTON_ACTIVE_MASK = 256;
-
-//===== Event Return Flags =====
-const Flags EVENT_NORMAL = 0;
-const Flags EVENT_CONSUMED = 1;
-const Flags EVENT_CALLBACK = 2;
 
 }
 }

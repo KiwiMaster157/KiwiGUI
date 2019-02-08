@@ -24,7 +24,6 @@ Flags GuiElement::mouseMove(sf::Vector2f point)
 		if (isForced())
 		{
 			offset += point - previousCoords;
-			updateTextureRect();
 		}
 		else
 		{
@@ -48,7 +47,6 @@ Flags GuiElement::mouseButtonDown(sf::Mouse::Button btn)
 		if (isHovered())
 		{
 			setClicked(true, btn);
-			updateTextureRect();
 			return EVENT_CONSUMED;
 		}
 		break;
@@ -67,15 +65,26 @@ Flags GuiElement::mouseButtonUp(sf::Mouse::Button btn)
 	switch (type)
 	{
 	case Type::Button:
-	case Type::ToggleButton:
 	case Type::Card:
 		if (isClicked(btn))
 		{
 			setClicked(false, btn);
-			updateTextureRect();
-			buttonState = !buttonState;
 			if (isHovered() && isSensitive(btn))
 				return EVENT_CONSUMED | EVENT_CALLBACK;
+			return EVENT_CONSUMED;
+		}
+		else if (isHovered())
+			return EVENT_CONSUMED;
+		break;
+	case Type::ToggleButton:
+		if (isClicked(btn))
+		{
+			setClicked(false, btn);
+			if (isHovered() && isSensitive(btn))
+			{
+				setSelected(!isSelected());
+				return EVENT_CONSUMED | EVENT_CALLBACK;
+			}
 			return EVENT_CONSUMED;
 		}
 		else if (isHovered())
@@ -124,8 +133,8 @@ int GuiElement::getState()
 {
 	switch (type)
 	{
-	case Type::Button:
-		return buttonState & BUTTON_SELECT_MASK;
+	case Type::ToggleButton:
+		return isSelected();
 		break;
 	}
 	return 0;
@@ -140,12 +149,19 @@ void GuiElement::updateTextureRect()
 		coords.x = currentFrame;
 		break;
 	case Type::Button:
+		if (isHovered())
+		{
+			coords.y = 1;
+			if (isForced())
+				coords.y = 2;
+		}
+		break;
 	case Type::ToggleButton:
 		coords.x = isSelected();
 		if (isHovered())
 		{
 			coords.y = 1;
-			if (isClicked())
+			if (isForced())
 				coords.y = 2;
 		}
 		break;
@@ -229,9 +245,9 @@ bool GuiElement::isForced() const
 	const Flags MMB = BUTTON_MMB_MASK | BUTTON_MMB_SENSITIVE;
 	const Flags RMB = BUTTON_RMB_MASK | BUTTON_RMB_SENSITIVE;
 
-	return (buttonFlags & LMB == LMB)
-		|| (buttonFlags & MMB == MMB)
-		|| (buttonFlags & RMB == RMB);
+	return ((buttonFlags & LMB) == LMB)
+		|| ((buttonFlags & MMB) == MMB)
+		|| ((buttonFlags & RMB) == RMB);
 }
 
 bool GuiElement::isForced(sf::Mouse::Button btn) const
@@ -243,11 +259,11 @@ bool GuiElement::isForced(sf::Mouse::Button btn) const
 	switch (btn)
 	{
 	case sf::Mouse::Button::Left:
-		return buttonFlags & LMB == LMB;
+		return (buttonFlags & LMB) == LMB;
 	case sf::Mouse::Button::Middle:
-		return buttonFlags & MMB == MMB;
+		return (buttonFlags & MMB) == MMB;
 	case sf::Mouse::Button::Right:
-		return buttonFlags & RMB == RMB;
+		return (buttonFlags & RMB) == RMB;
 	}
 	return false;
 }
