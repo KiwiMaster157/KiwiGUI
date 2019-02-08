@@ -78,6 +78,7 @@ public:
 	void mouseButtonUp(sf::Mouse::Button btn);
 
 	void draw(sf::RenderTarget& target);
+	void draw(sf::RenderTarget& target, Key root);
 
 	//Throw std::range_error on failure
 	GuiElement& directElementAccess(const Key& name);
@@ -86,7 +87,7 @@ public:
 
 private:
 	std::unordered_map<Key, GuiElement> m_lookupTable;
-	Key m_root = "root";
+	Key m_root;
 
 	std::map<Key, sf::Texture> m_textures;
 	std::map<Key, sf::Font> m_fonts;

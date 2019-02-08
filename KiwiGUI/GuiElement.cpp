@@ -17,11 +17,22 @@ Flags GuiElement::mouseMove(sf::Vector2f point)
 	switch (type)
 	{
 	case Type::Button:
-		if (contains(point - offset) != isHovered())
+	case Type::ToggleButton:
+		setHovered(contains(point - offset));
+		break;
+	case Type::Card:
+		if (isForced())
 		{
-			setHovered(!isHovered());
+			offset += point - previousCoords;
 			updateTextureRect();
 		}
+		else
+		{
+			setHovered(contains(point - offset));
+		}
+
+		previousCoords = point;
+
 		break;
 	}
 	
@@ -33,14 +44,19 @@ Flags GuiElement::mouseButtonDown(sf::Mouse::Button btn)
 	switch (type)
 	{
 	case Type::Button:
+	case Type::ToggleButton:
 		if (isHovered())
 		{
 			setClicked(true, btn);
 			updateTextureRect();
 			return EVENT_CONSUMED;
 		}
-
 		break;
+	case Type::Card:
+		if (isHovered())
+		{
+			setClicked(true, btn);
+		}
 	}
 
 	return EVENT_NORMAL;
@@ -51,18 +67,19 @@ Flags GuiElement::mouseButtonUp(sf::Mouse::Button btn)
 	switch (type)
 	{
 	case Type::Button:
+	case Type::ToggleButton:
+	case Type::Card:
 		if (isClicked(btn))
 		{
 			setClicked(false, btn);
 			updateTextureRect();
-			buttonState = btn;
-			if (isHovered())
+			buttonState = !buttonState;
+			if (isHovered() && isSensitive(btn))
 				return EVENT_CONSUMED | EVENT_CALLBACK;
 			return EVENT_CONSUMED;
 		}
 		else if (isHovered())
 			return EVENT_CONSUMED;
-
 		break;
 	}
 	
@@ -93,6 +110,8 @@ void GuiElement::draw(sf::RenderTarget& target, sf::Transform offset)
 
 		break;
 	case Type::Button:
+	case Type::ToggleButton:
+	case Type::Card:
 		
 		target.draw(sprite, offset);
 		target.draw(text, offset);
@@ -106,7 +125,7 @@ int GuiElement::getState()
 	switch (type)
 	{
 	case Type::Button:
-		return buttonState;
+		return buttonState & BUTTON_SELECT_MASK;
 		break;
 	}
 	return 0;
@@ -121,6 +140,7 @@ void GuiElement::updateTextureRect()
 		coords.x = currentFrame;
 		break;
 	case Type::Button:
+	case Type::ToggleButton:
 		coords.x = isSelected();
 		if (isHovered())
 		{
@@ -167,7 +187,7 @@ bool GuiElement::isHovered() const
 
 bool GuiElement::isClicked() const
 {
-	return buttonFlags & BUTTON_ANY_MASK;
+	return buttonFlags & (BUTTON_LMB_MASK | BUTTON_MMB_MASK | BUTTON_RMB_MASK);
 }
 
 bool GuiElement::isClicked(sf::Mouse::Button btn) const
@@ -189,12 +209,56 @@ bool GuiElement::isSelected() const
 	return buttonFlags & BUTTON_SELECT_MASK;
 }
 
+bool GuiElement::isSensitive(sf::Mouse::Button btn) const
+{
+	switch (btn)
+	{
+	case sf::Mouse::Button::Left:
+		return buttonFlags & BUTTON_LMB_SENSITIVE;
+	case sf::Mouse::Button::Middle:
+		return buttonFlags & BUTTON_MMB_SENSITIVE;
+	case sf::Mouse::Button::Right:
+		return buttonFlags & BUTTON_RMB_SENSITIVE;
+	}
+	return false;
+}
+
+bool GuiElement::isForced() const
+{
+	const Flags LMB = BUTTON_LMB_MASK | BUTTON_LMB_SENSITIVE;
+	const Flags MMB = BUTTON_MMB_MASK | BUTTON_MMB_SENSITIVE;
+	const Flags RMB = BUTTON_RMB_MASK | BUTTON_RMB_SENSITIVE;
+
+	return (buttonFlags & LMB == LMB)
+		|| (buttonFlags & MMB == MMB)
+		|| (buttonFlags & RMB == RMB);
+}
+
+bool GuiElement::isForced(sf::Mouse::Button btn) const
+{
+	const Flags LMB = BUTTON_LMB_MASK | BUTTON_LMB_SENSITIVE;
+	const Flags MMB = BUTTON_MMB_MASK | BUTTON_MMB_SENSITIVE;
+	const Flags RMB = BUTTON_RMB_MASK | BUTTON_RMB_SENSITIVE;
+
+	switch (btn)
+	{
+	case sf::Mouse::Button::Left:
+		return buttonFlags & LMB == LMB;
+	case sf::Mouse::Button::Middle:
+		return buttonFlags & MMB == MMB;
+	case sf::Mouse::Button::Right:
+		return buttonFlags & RMB == RMB;
+	}
+	return false;
+}
+
 void GuiElement::setHovered(bool set)
 {
 	if (set)
 		buttonFlags |= BUTTON_HOVER_MASK;
 	else
 		buttonFlags &= ~BUTTON_HOVER_MASK;
+	updateTextureRect();
 }
 
 void GuiElement::setClicked(bool set, sf::Mouse::Button btn)
@@ -220,6 +284,7 @@ void GuiElement::setClicked(bool set, sf::Mouse::Button btn)
 			buttonFlags &= ~BUTTON_RMB_MASK;
 		break;
 	}
+	updateTextureRect();
 }
 
 void GuiElement::setSelected(bool set)
@@ -228,6 +293,32 @@ void GuiElement::setSelected(bool set)
 		buttonFlags |= BUTTON_SELECT_MASK;
 	else
 		buttonFlags &= ~BUTTON_SELECT_MASK;
+	updateTextureRect();
+}
+
+void GuiElement::setSensitive(bool set, sf::Mouse::Button btn)
+{
+	switch (btn)
+	{
+	case sf::Mouse::Button::Left:
+		if (set)
+			buttonFlags |= BUTTON_LMB_SENSITIVE;
+		else
+			buttonFlags &= ~BUTTON_LMB_SENSITIVE;
+		break;
+	case sf::Mouse::Button::Middle:
+		if (set)
+			buttonFlags |= BUTTON_MMB_SENSITIVE;
+		else
+			buttonFlags &= ~BUTTON_MMB_SENSITIVE;
+		break;
+	case sf::Mouse::Button::Right:
+		if (set)
+			buttonFlags |= BUTTON_RMB_SENSITIVE;
+		else
+			buttonFlags &= ~BUTTON_RMB_SENSITIVE;
+		break;
+	}
 }
 
 #pragma endregion Buttons

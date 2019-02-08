@@ -43,10 +43,16 @@ struct GuiElement
 	bool isClicked() const;
 	bool isClicked(sf::Mouse::Button btn) const;
 	bool isSelected() const;
-	
+	bool isSensitive(sf::Mouse::Button btn) const;
+
+	//Forced = clicked && sensitive
+	bool isForced() const;
+	bool isForced(sf::Mouse::Button btn) const;
+
 	void setHovered(bool set);
 	void setClicked(bool set, sf::Mouse::Button btn);
 	void setSelected(bool set);
+	void setSensitive(bool set, sf::Mouse::Button btn);
 #pragma endregion Buttons
 #pragma endregion Methods
 
@@ -59,10 +65,12 @@ struct GuiElement
 
 	enum class Type
 	{
-		Empty,		//Does nothing. Exists for organizational purposes.
-		Static,		//Visual only. Can be animated.
-		Button,		//Calls cb when clicked (press and release)
-		FINAL		//Placeholder for end of list (not a valid type)
+		Empty,			//Does nothing. Exists for organizational purposes.
+		Static,			//Visual only. Can be animated.
+		Button,			//Calls cb when clicked (press and release)
+		ToggleButton,	//Calls cb and swaps state when when clicked
+		Card,			//Can be dragged with mouse
+		FINAL			//Placeholder for end of list (not a valid type)
 	} type = Type::Empty;
 
 	sf::Text text;
@@ -70,7 +78,7 @@ struct GuiElement
 
 	sf::IntRect baseRect;
 
-	sf::Vector2f offset = sf::Vector2f(0.0f, 0.0f);
+	sf::Vector2f offset = sf::Vector2f(0, 0);
 #pragma endregion Basic UI
 
 #pragma region
@@ -85,6 +93,10 @@ struct GuiElement
 	Callback cb;
 	int buttonState = 0;
 #pragma endregion Button
+
+#pragma region
+	sf::Vector2f previousCoords = sf::Vector2f(0, 0);
+#pragma endregion Card
 #pragma endregion Fields
 };
 
@@ -96,10 +108,13 @@ const Flags BUTTON_LMB_MASK = 2;
 const Flags BUTTON_MMB_MASK = 4;
 const Flags BUTTON_RMB_MASK = 8;
 const Flags BUTTON_SELECT_MASK = 16;
-const Flags BUTTON_ANY_MASK = BUTTON_LMB_MASK | BUTTON_MMB_MASK | BUTTON_RMB_MASK;
+
+const Flags BUTTON_LMB_SENSITIVE = 32;
+const Flags BUTTON_MMB_SENSITIVE = 64;
+const Flags BUTTON_RMB_SENSITIVE = 128;
 
 //When flag is false, element and children do nothing
-const Flags BUTTON_ACTIVE_MASK = 32;
+const Flags BUTTON_ACTIVE_MASK = 256;
 
 //===== Event Return Flags =====
 const Flags EVENT_NORMAL = 0;

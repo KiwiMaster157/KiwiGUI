@@ -51,3 +51,25 @@ bool operator>=(Key lhs, Key rhs);
 
 }
 }
+
+//Define standard hashing function for Key
+namespace std
+{
+template<> struct hash<kiwi::gui::Key>
+{
+	std::size_t operator()(kiwi::gui::Key value) const
+	{
+		int length = value.size();
+		int retval = 0;
+		for (int i = 0; i < length; i++)
+		{
+			retval += value[i];
+			retval <<= 1;
+		}
+
+		retval += length;
+
+		return retval;
+	}
+};
+}

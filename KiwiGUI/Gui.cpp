@@ -116,7 +116,13 @@ void Gui::mouseButtonUp(sf::Mouse::Button btn)
 
 void Gui::draw(sf::RenderTarget& target)
 {
-	drawHelper(target, m_root, sf::Vector2f(0, 0));
+	draw(target, m_root);
+}
+
+void Gui::draw(sf::RenderTarget& target, Key root)
+{
+	drawHelper(target, root, sf::Vector2f(0, 0));
+	m_root = root;
 }
 
 GuiElement& Gui::directElementAccess(const Key& name)
