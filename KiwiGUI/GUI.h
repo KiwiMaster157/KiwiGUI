@@ -51,8 +51,8 @@ public:
 	void move(Key name, float x, float y);
 	void move(Key name, const sf::Vector2f& offset);
 
-	sf::Transformable& spriteTransform(Key name);
-	sf::Transformable& textTransform(Key name);
+	sf::Transformable& transformSprite(Key name);
+	sf::Transformable& transformText(Key name);
 
 #pragma endregion Transforms
 
@@ -61,13 +61,29 @@ public:
 	
 	//Throws std::invalid_argument if name already in use
 	//Throws std::range_error if parent could not be found
-	GuiElement& insertElement(Key name, Key parent, GuiElement::Type type);
+	void insertElement(Key name, Key parent, Type type);
 
 	//Removes element and children recursively
 	void removeElement(Key name);
 
-	//
 	void transferOwnership(Key name, Key toOwner);
+
+	void setType(Key name, Type type);
+
+	//Helper mutators
+	//Throw std::range_error if element not found
+	//Optionally can use braced list to create rectangle
+	void setTexture(Key name, const sf::Texture& txt, sf::IntRect baseRect);
+	
+	void setTexture(Key name, Key txt, sf::IntRect baseRect);
+	
+	//Negative length = no loop
+	//If type != Cursor, type = Static
+	void setAnimation(Key name, Duration period, int length);
+	void setAnimation(Key name, float periodSeconds, int length);
+
+	void setCallback(Key name, Callback cb);
+	void resetCallback(Key name);
 
 	//Negative amounts result in undefined behavior
 	//Moving an item out of array bounds = UB
@@ -84,7 +100,9 @@ public:
 	void draw(sf::RenderTarget& target);
 
 	//Throw std::range_error on failure
-	GuiElement& directElementAccess(const Key& name);
+	GuiElement& directElementAccess(Key name);
+	GuiElementBase& getBase(Key name);
+	Type getType(Key name);
 
 #pragma endregion Element Acccess
 

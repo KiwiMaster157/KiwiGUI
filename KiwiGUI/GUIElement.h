@@ -11,6 +11,8 @@
 
 #include <unordered_map>
 
+//Implementation is split between GuiElement.cpp, GuiElementType.cpp
+
 namespace kiwi
 {
 namespace gui
@@ -40,28 +42,9 @@ const Flags EVENT_CALLBACK = 2;
 
 sf::Transform getOffsetTransform(sf::Vector2f offset);
 
-struct GuiElement
+struct GuiElementBase
 {
 #pragma region
-#pragma region
-
-	Flags mouseMove(sf::Vector2f point);
-	Flags mouseButtonDown(sf::Mouse::Button btn);
-	Flags mouseButtonUp(sf::Mouse::Button btn);
-
-	void draw(sf::RenderTarget& target, sf::Transform offset);
-	int getState(); //Return value is passed to callback when called
-
-	void updateTextureRect();
-
-	bool isActive() const;
-	void setActive(bool set);
-
-#pragma endregion Basic UI
-
-#pragma region
-	bool contains(sf::Vector2f point);
-	
 	bool isHovered() const;
 	bool isClicked() const;
 	bool isClicked(sf::Mouse::Button btn) const;
@@ -76,7 +59,34 @@ struct GuiElement
 	void setClicked(bool set, sf::Mouse::Button btn);
 	void setSelected(bool set);
 	void setSensitive(bool set, sf::Mouse::Button btn);
+
+	bool isActive() const;
+	void setActive(bool set);
+
 #pragma endregion Buttons
+
+	Flags buttonFlags = BUTTON_ACTIVE_MASK;
+};
+
+struct GuiElement : public GuiElementBase
+{
+#pragma region
+#pragma region
+
+	// Customize element types
+	//Implemented in GuiElementType.cpp
+	Flags mouseMove(sf::Vector2f point);
+	Flags mouseButtonDown(sf::Mouse::Button btn);
+	Flags mouseButtonUp(sf::Mouse::Button btn);
+
+	void draw(sf::RenderTarget& target, sf::Transform offset);
+	int getState(); //Return value is passed to callback when called
+	void updateTextureRect();
+	
+	//Implemented in GuiElement.cpp
+	bool contains(sf::Vector2f point);
+
+#pragma endregion Basic UI
 #pragma endregion Methods
 
 #pragma region
@@ -87,20 +97,12 @@ struct GuiElement
 	std::vector<Key> children;
 	Key parent;
 
-	enum class Type
-	{
-		Empty,			//Does nothing. Exists for organizational purposes.
-		Static,			//Visual only. Can be animated.
-		Button,			//Calls cb when clicked (press and release)
-		ToggleButton,	//Calls cb and swaps state when when clicked
-		Card,			//Can be dragged with mouse
-		FINAL			//Placeholder for end of list (not a valid type)
-	} type = Type::Empty;
+	Type type = Type::Empty;
 
 	sf::Text text;
 	sf::Sprite sprite;
 
-	sf::IntRect baseRect = sf::IntRect(0, 0, 128, 128);
+	sf::IntRect baseRect = sf::IntRect(0, 0, 0, 0);
 
 	sf::Vector2f offset = sf::Vector2f(0, 0);
 #pragma endregion Basic UI
@@ -113,7 +115,6 @@ struct GuiElement
 #pragma endregion Animation
 
 #pragma region
-	Flags buttonFlags = BUTTON_ACTIVE_MASK;
 	Callback cb;
 	int buttonState = 0;
 #pragma endregion Button

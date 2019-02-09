@@ -26,19 +26,19 @@ void Application::processEvent(sf::Event e, sf::Window& win, Gui& gui)
 	{
 	case sf::Event::Closed:
 		if(closeCallback)
-			closeCallback("CLOSE", 0);
+			closeCallback(0);
 		break;
 	case sf::Event::GainedFocus:
 		if(focusCallback)
-			focusCallback("FOCUS", 1);
+			focusCallback(1);
 		break;
 	case sf::Event::LostFocus:
 		if(focusCallback)
-			focusCallback("FOCUS", 0);
+			focusCallback(0);
 		break;
 	case sf::Event::KeyPressed:
 		if(keyCallbacks[e.key.code])
-			keyCallbacks[e.key.code]("KEYBOARD", e.key.code);
+			keyCallbacks[e.key.code](e.key.code);
 		break;
 	case sf::Event::MouseMoved:
 		gui.mouseMove(e.mouseMove.x, e.mouseMove.y);
@@ -51,7 +51,7 @@ void Application::processEvent(sf::Event e, sf::Window& win, Gui& gui)
 		break;
 	case sf::Event::Resized:
 		if(resizeCallback)
-			resizeCallback("RESIZE", e.size.width << 16 | e.size.height);
+			resizeCallback(e.size.width << 16 | e.size.height);
 		break;
 	}
 }

@@ -8,7 +8,7 @@ namespace gui
 
 Gui::Gui()
 {
-	m_lookupTable[ROOT].type = GuiElement::Type::Empty;
+	m_lookupTable[ROOT].type = Type::Empty;
 }
 
 #pragma region
@@ -91,12 +91,12 @@ void Gui::move(Key name, const sf::Vector2f& offset)
 	directElementAccess(name).offset += offset;
 }
 
-sf::Transformable& Gui::spriteTransform(Key name)
+sf::Transformable& Gui::transformSprite(Key name)
 {
 	return directElementAccess(name).sprite;
 }
 
-sf::Transformable& Gui::textTransform(Key name)
+sf::Transformable& Gui::transformText(Key name)
 {
 	return directElementAccess(name).text;
 }
@@ -105,7 +105,7 @@ sf::Transformable& Gui::textTransform(Key name)
 
 #pragma region
 
-GuiElement& Gui::insertElement(Key name, Key parent, GuiElement::Type type)
+void Gui::insertElement(Key name, Key parent, Type type)
 {
 	if (m_lookupTable.count(name))
 		throw std::invalid_argument(std::string("\"") + std::string(name) + "\" already in use.");
@@ -114,8 +114,6 @@ GuiElement& Gui::insertElement(Key name, Key parent, GuiElement::Type type)
 
 	m_lookupTable[name].type = type;
 	m_lookupTable[name].parent = parent;
-
-	return m_lookupTable[name];
 }
 
 void Gui::removeElement(Key name)
@@ -161,6 +159,48 @@ void Gui::transferOwnership(Key name, Key toOwner)
 
 	//Add to new owner
 	directElementAccess(toOwner).children.push_back(name);
+}
+
+void Gui::setType(Key name, Type type)
+{
+	directElementAccess(name).type = type;
+}
+
+void Gui::setTexture(Key name, const sf::Texture& txt, sf::IntRect baseRect)
+{
+	GuiElement& e = directElementAccess(name);
+	e.sprite.setTexture(txt);
+	e.baseRect = baseRect;
+}
+
+void Gui::setTexture(Key name, Key txt, sf::IntRect baseRect)
+{
+	setTexture(name, getTexture(txt), baseRect);
+}
+
+void Gui::setAnimation(Key name, Duration period, int length)
+{
+	GuiElement& e = directElementAccess(name);
+	if(e.type != Type::Cursor)
+		e.type = Type::Static;
+	e.period = period;
+	e.advanceFrame = Clock::now() + period;
+	e.animationLength = length;
+}
+
+void Gui::setAnimation(Key name, float period, int length)
+{
+	setAnimation(name, std::chrono::milliseconds(static_cast<int>(1000 * period + 0.5)), length);
+}
+
+void Gui::setCallback(Key name, Callback cb)
+{
+	directElementAccess(name).cb = cb;
+}
+
+void Gui::resetCallback(Key name)
+{
+	directElementAccess(name).cb = nullptr;
 }
 
 void Gui::moveForward(Key name, int amount)
@@ -272,12 +312,22 @@ void Gui::draw(sf::RenderTarget& target)
 	drawHelper(target, ROOT, sf::Vector2f(0, 0));
 }
 
-GuiElement& Gui::directElementAccess(const Key& name)
+GuiElement& Gui::directElementAccess(Key name)
 {
 	auto itt = m_lookupTable.find(name);
 	if (itt == m_lookupTable.end())
 		throw std::range_error(std::string("\"") + std::string(name) + "\" does not name a Texture.");
 	return itt->second;
+}
+
+GuiElementBase& Gui::getBase(Key name)
+{
+	return directElementAccess(name);
+}
+
+Type Gui::getType(Key name)
+{
+	return directElementAccess(name).type;
 }
 
 #pragma endregion Element Access
@@ -311,7 +361,7 @@ bool Gui::mouseMoveHelper(Key name, sf::Vector2f point)
 	Flags output = element.mouseMove(point);
 	if (output & EVENT_CALLBACK)
 		if(element.cb)
-			element.cb(name, element.getState());
+			element.cb(element.getState());
 	return output & EVENT_CONSUMED;
 }
 
@@ -330,7 +380,7 @@ bool Gui::mouseButtonDownHelper(Key name, sf::Mouse::Button btn)
 	Flags output = element.mouseButtonDown(btn);
 	if (output& EVENT_CALLBACK)
 		if(element.cb)
-			element.cb(name, element.getState());
+			element.cb(element.getState());
 	return output & EVENT_CONSUMED;
 }
 
@@ -348,7 +398,7 @@ bool Gui::mouseButtonUpHelper(Key name, sf::Mouse::Button btn)
 
 	Flags output = element.mouseButtonUp(btn);
 	if (output & EVENT_CALLBACK)
-		element.cb(name, element.getState());
+		element.cb(element.getState());
 	return output & EVENT_CONSUMED;
 }
 

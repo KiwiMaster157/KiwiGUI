@@ -11,27 +11,23 @@ int main(int argc, char** argv)
 
 	gui.openTexture("txtr0", "Trolls.png");
 
-	kiwi::gui::GuiElement& btn = gui.insertElement("Btn0", kiwi::gui::ROOT, kiwi::gui::GuiElement::Type::Card);
-	btn.sprite.setTexture(gui.getTexture("txtr0"));
-	btn.baseRect = sf::IntRect(0, 214, 153, 214);
-	btn.updateTextureRect();
-	btn.sprite.setPosition(200, 200);
-	btn.cb = [](kiwi::gui::Key str, int num) { std::cout << "Btn0" << std::endl; };
-	btn.setSensitive(true, sf::Mouse::Left);
+	gui.insertElement("Btn0", kiwi::gui::ROOT, kiwi::gui::Type::AntiCard);
+	gui.setTexture("Btn0", "txtr0", { 0, 0, 153, 214 });
+	gui.transformSprite("Btn0").setPosition(200, 200);
+	gui.setCallback("Btn0", [&](int num) 
+		{ 
+			std::cout << "Btn0" << std::endl;
+			//gui.moveToFront("Btn1");
+		});
+	gui.getBase("Btn0").setSensitive(true, sf::Mouse::Left);
 
-	kiwi::gui::GuiElement& btn2 = gui.insertElement("Btn1", "Btn0", kiwi::gui::GuiElement::Type::Static);
-	btn2.sprite.setTexture(gui.getTexture("txtr0"));
-	btn2.baseRect = sf::IntRect(0, 0, 153, 214);
-	btn2.updateTextureRect();
-	btn2.advanceFrame = kiwi::gui::Clock::now();
-	btn2.period = std::chrono::milliseconds(1000);
-	btn2.animationLength = 4;
+	gui.insertElement("Btn1", "Btn0", kiwi::gui::Type::Cursor);
+	gui.setTexture("Btn1", "txtr0", { 0, 0, 153, 214 });
+	gui.setAnimation("Btn1", std::chrono::seconds(1), 4);
 
-
-	app.closeCallback = [&](kiwi::gui::Key str, int num) { window.close(); };
-	app.keyCallbacks[sf::Keyboard::Space] = [](kiwi::gui::Key str, int num) { std::cout << "Space" << std::endl; };
-	app.keyCallbacks[sf::Keyboard::W] = [&](kiwi::gui::Key str, int num) { gui.move("Btn0", 0, 10); };
-
+	app.closeCallback = [&](int num) { std::cout << "Closing"; window.close(); };
+	app.keyCallbacks[sf::Keyboard::Space] = [](int num) { std::cout << "Space" << std::endl; };
+	app.keyCallbacks[sf::Keyboard::W] = [&](int num) { gui.move("Btn0", 0, 10); };
 
 	window.create(sf::VideoMode(720, 640), "Test window");
 

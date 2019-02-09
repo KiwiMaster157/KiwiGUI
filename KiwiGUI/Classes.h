@@ -30,8 +30,19 @@ class Gui;
 //This type is not visible to the end user.
 struct GuiElement;
 
-using Message = std::vector<int>;
-using Callback = std::function<void(const Key&, int)>;
+enum class Type
+{
+	Empty,			//Does nothing. Exists for organizational purposes.
+	Static,			//Visual only. Can be animated.
+	Button,			//Calls cb when clicked (press and release)
+	ToggleButton,	//Calls cb and swaps state when when clicked
+	Card,			//Can be dragged with mouse
+	AntiCard,		//Can be dragged with mouse, but moves opposite direction
+	Cursor,			//Moves with mouse, regardless of mouse clicks
+	FINAL			//Placeholder for end of list (not a valid type)
+};
+
+using Callback = std::function<void(int)>;
 
 }
 }
