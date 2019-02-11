@@ -1,6 +1,8 @@
 #include "Gui.h"
 #include "GuiElement.h"
 
+#include <SFML/Window/Window.hpp>
+
 namespace kiwi
 {
 namespace gui
@@ -10,6 +12,81 @@ Gui::Gui()
 {
 	m_lookupTable[ROOT].type = Type::Empty;
 }
+
+#pragma region
+
+bool Gui::pollEvent(sf::Window& window)
+{
+	sf::Event e;
+	if (!window.pollEvent(e))
+		return false;
+	processEvent(e, window);
+	return true;
+}
+
+bool Gui::waitEvent(sf::Window& window)
+{
+	sf::Event e;
+	window.waitEvent(e);
+	processEvent(e, window);
+	return true;
+}
+
+bool Gui::allEvents(sf::Window& window)
+{
+	sf::Event e;
+	while (window.pollEvent(e))
+		processEvent(e, window);
+	return true;
+}
+
+void Gui::processEvent(sf::Event e, sf::Window& window)
+{
+	switch (e.type)
+	{
+	case sf::Event::Closed:
+		if (m_closeCallback)
+			m_closeCallback(0);
+		else
+			window.close();
+		break;
+	case sf::Event::GainedFocus:
+		if (m_focusCallback)
+			m_focusCallback(1);
+		break;
+	case sf::Event::LostFocus:
+		if (m_focusCallback)
+			m_focusCallback(0);
+		break;
+	case sf::Event::KeyPressed:
+		if (m_keyCallback[e.key.code])
+			m_keyCallback[e.key.code](e.key.code);
+		break;
+	case sf::Event::MouseEntered:
+		if (m_migrationCallback)
+			m_migrationCallback(1);
+		break;
+	case sf::Event::MouseLeft:
+		if (m_migrationCallback)
+			m_migrationCallback(0);
+		break;
+	case sf::Event::MouseMoved:
+		mouseMove(e.mouseMove.x, e.mouseMove.y);
+		break;
+	case sf::Event::MouseButtonPressed:
+		mouseButtonDown(e.mouseButton.button);
+		break;
+	case sf::Event::MouseButtonReleased:
+		mouseButtonUp(e.mouseButton.button);
+		break;
+	case sf::Event::Resized:
+		if (m_resizeCallback)
+			m_resizeCallback(e.size.width << 16 | e.size.height);
+		break;
+	}
+}
+
+#pragma endregion Events
 
 #pragma region
 
@@ -332,6 +409,61 @@ Type Gui::getType(Key name)
 
 #pragma endregion Element Access
 
+#pragma region
+
+void Gui::setKeyCallback(sf::Keyboard::Key key, Callback cb)
+{
+	m_keyCallback[key] = cb;
+}
+
+void Gui::resetKeyCallback(sf::Keyboard::Key key)
+{
+	m_keyCallback[key] = nullptr;
+}
+
+void Gui::setCloseCallback(Callback cb)
+{
+	m_closeCallback = cb;
+}
+
+void Gui::resetCloseCallback()
+{
+	m_closeCallback = nullptr;
+}
+
+void Gui::setFocusCallback(Callback cb)
+{
+	m_focusCallback = cb;
+}
+
+void Gui::resetFocusCallback()
+{
+	m_focusCallback = nullptr;
+}
+
+void Gui::setMigrationCallback(Callback cb)
+{
+	m_migrationCallback = cb;
+}
+
+void Gui::resetMigrationCallback()
+{
+	m_migrationCallback = nullptr;
+}
+
+void Gui::setResizeCallback(Callback cb)
+{
+	m_resizeCallback = cb;
+}
+
+void Gui::resetResizeCallback()
+{
+	m_resizeCallback = nullptr;
+}
+
+#pragma endregion Keyboard & System
+
+#pragma region
 void Gui::drawHelper(sf::RenderTarget& target, Key name, sf::Vector2f offset)
 {
 	GuiElement& element = directElementAccess(name);
@@ -401,6 +533,7 @@ bool Gui::mouseButtonUpHelper(Key name, sf::Mouse::Button btn)
 		element.cb(element.getState());
 	return output & EVENT_CONSUMED;
 }
+#pragma endregion Implementation
 
 }
 }

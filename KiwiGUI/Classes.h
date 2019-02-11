@@ -33,12 +33,13 @@ struct GuiElement;
 enum class Type
 {
 	Empty,			//Does nothing. Exists for organizational purposes.
-	Static,			//Visual only. Can be animated.
+	Static,			//Reacts when hovered, but does not consume event. Animated.
 	Button,			//Calls cb when clicked (press and release)
 	ToggleButton,	//Calls cb and swaps state when when clicked
 	Card,			//Can be dragged with mouse
 	AntiCard,		//Can be dragged with mouse, but moves opposite direction
-	Cursor,			//Moves with mouse, regardless of mouse clicks
+	Cursor,			//Moves with mouse, regardless of mouse clicks. Animated.
+//	TextInput,		//Reacts to text events if selected
 	FINAL			//Placeholder for end of list (not a valid type)
 };
 

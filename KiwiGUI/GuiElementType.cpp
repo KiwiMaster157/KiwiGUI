@@ -13,6 +13,17 @@ Flags GuiElement::mouseMove(sf::Vector2f point)
 {
 	switch (type)
 	{
+	case Type::Static:
+		switch (2 * contains(point - offset) + 1 * isHovered())
+		{
+		case 1:	//Not contained, hovered
+			setHovered(false);
+			return EVENT_CALLBACK;
+		case 2:	//Contained, not hovered
+			setHovered(true);
+			return EVENT_CALLBACK;
+		}
+		break;
 	case Type::Button:
 	case Type::ToggleButton:
 		setHovered(contains(point - offset));
@@ -45,6 +56,7 @@ Flags GuiElement::mouseMove(sf::Vector2f point)
 		break;
 	case Type::Cursor:
 		offset = point;
+		break;
 	}
 
 	return EVENT_NORMAL;
@@ -142,9 +154,10 @@ int GuiElement::getState()
 {
 	switch (type)
 	{
+	case Type::Static:
+		return isHovered();
 	case Type::ToggleButton:
 		return isSelected();
-		break;
 	}
 	return 0;
 }

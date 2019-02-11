@@ -7,8 +7,10 @@
 #include <SFML/Graphics/Font.hpp>
 #include <SFML/Graphics/Texture.hpp>
 #include <SFML/Graphics/Transformable.hpp>
+#include <SFML/Window/Event.hpp>
 #include <SFML/Window/Mouse.hpp>
 
+#include <array>
 #include <map>
 #include <string>
 #include <unordered_map>
@@ -24,6 +26,17 @@ class Gui
 {
 public:
 	Gui();
+
+#pragma region
+
+	bool pollEvent(sf::Window& window);
+	bool waitEvent(sf::Window& window);
+	
+	bool allEvents(sf::Window& window);
+
+	void processEvent(sf::Event e, sf::Window& window);
+
+#pragma endregion Events
 
 #pragma region
 
@@ -106,11 +119,44 @@ public:
 
 #pragma endregion Element Acccess
 
+#pragma region
+
+	//Called on key press event
+	void setKeyCallback(sf::Keyboard::Key key, Callback cb);
+	void resetKeyCallback(sf::Keyboard::Key key);
+
+	//Called on window close event
+	void setCloseCallback(Callback cb);
+	void resetCloseCallback();
+
+	//Called when focus is gained or lost.
+	//0 = lost; 1 = gained.
+	void setFocusCallback(Callback cb);
+	void resetFocusCallback();
+
+	//Called when mouse enters or leaves window
+	//0 = left, 1 = entered
+	void setMigrationCallback(Callback cb);
+	void resetMigrationCallback();
+
+	//Called when window is resized.
+	//(newX << 16) | newY
+	void setResizeCallback(Callback cb);
+	void resetResizeCallback();
+
+#pragma endregion Keyboard & System
+
 private:
 	std::unordered_map<Key, GuiElement> m_lookupTable;
 
 	std::map<Key, sf::Texture> m_textures;
 	std::map<Key, sf::Font> m_fonts;
+
+	std::array<Callback, sf::Keyboard::KeyCount> m_keyCallback;
+	Callback m_closeCallback;
+	Callback m_focusCallback; //1 = gain, 0 = loss
+	Callback m_migrationCallback; //1 = enter, 0 = leave
+	Callback m_resizeCallback;
 
 	//Returns true if event is consumed
 	void drawHelper(sf::RenderTarget& target, Key name, sf::Vector2f offset);
@@ -118,7 +164,6 @@ private:
 	bool mouseMoveHelper(Key name, sf::Vector2f point);
 	bool mouseButtonDownHelper(Key name, sf::Mouse::Button btn);
 	bool mouseButtonUpHelper(Key name, sf::Mouse::Button btn);
-
 
 };
 

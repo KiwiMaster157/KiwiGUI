@@ -124,14 +124,12 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="..\KiwiGui.h" />
-    <ClInclude Include="Application.h" />
     <ClInclude Include="Classes.h" />
     <ClInclude Include="Gui.h" />
     <ClInclude Include="GuiElement.h" />
     <ClInclude Include="Key.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="Application.cpp" />
     <ClCompile Include="GuiElement.cpp" />
     <ClCompile Include="GuiElementBase.cpp" />
     <ClCompile Include="GuiElementType.cpp" />

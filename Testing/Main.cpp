@@ -4,7 +4,6 @@
 int main(int argc, char** argv)
 {
 	sf::RenderWindow window;
-	kiwi::gui::Application app;
 	kiwi::gui::Gui gui;
 
 	//Initialize Logic
@@ -24,22 +23,31 @@ int main(int argc, char** argv)
 	gui.insertElement("Btn1", "Btn0", kiwi::gui::Type::Cursor);
 	gui.setTexture("Btn1", "txtr0", { 0, 0, 153, 214 });
 	gui.setAnimation("Btn1", std::chrono::seconds(1), 4);
+	
+	gui.setKeyCallback(sf::Keyboard::Space, [](int num)
+		{
+			std::cout << "Space" << std::endl;
+		});
+	
+	gui.setKeyCallback(sf::Keyboard::W, [&](int num)
+		{
+			gui.move("Btn0", 0, 10);
+		});
 
-	app.closeCallback = [&](int num) { std::cout << "Closing"; window.close(); };
-	app.keyCallbacks[sf::Keyboard::Space] = [](int num) { std::cout << "Space" << std::endl; };
-	app.keyCallbacks[sf::Keyboard::W] = [&](int num) { gui.move("Btn0", 0, 10); };
+	gui.setMigrationCallback([&](int num)
+		{
+			gui.getBase("Btn1").setActive(num);
+		});
 
 	window.create(sf::VideoMode(720, 640), "Test window");
 
 	//Main loop
 	while (window.isOpen())
 	{
-		app.pollAllEvents(window, gui);
+		gui.allEvents(window);
 
 		window.clear();
-
 		gui.draw(window);
-		
 		window.display();
 	}
 
